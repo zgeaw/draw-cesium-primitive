@@ -58,9 +58,8 @@ export default class GlobePointMeasure {
       }
       this.position = cartesian
 
-      this.entity.position.setValue(cartesian)
       let text = this._getMeasureTip(this.position)
-      this.entity.label.text = text
+      this.setPrimitiveHeight(cartesian, text)
 
       this.tooltip.setVisible(false)
       this._startModify()
@@ -86,11 +85,18 @@ export default class GlobePointMeasure {
       if (this.entity == null) {
         this._createPoint()
       } else {
-        this.entity.position.setValue(cartesian)
         let text = this._getMeasureTip(this.position)
-        this.entity.label.text = text
+        this.setPrimitiveHeight(cartesian, text)
+        this.tooltip.showAt(wp, '<p>选择位置</p>')
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+  }
+  // 动态改变位置
+  setPrimitiveHeight(cartesian, text) {
+    this.entity._labels[0].position = cartesian
+    if(text){
+      this.entity._labels[0].text = text
+    }    
   }
   _startModify() {
     let isMoving = false
@@ -117,7 +123,7 @@ export default class GlobePointMeasure {
       }
       if (isMoving) {
         isMoving = false
-        pickedAnchor.position.setValue(cartesian)
+        this.setPrimitiveHeight(cartesian)
         this.position = cartesian
         this.tooltip.setVisible(false)
       } else {
@@ -125,10 +131,10 @@ export default class GlobePointMeasure {
         if (!Cesium.defined(pickedObject)) {
           return
         }
-        if (!Cesium.defined(pickedObject.id)) {
+        if (!Cesium.defined(pickedObject.layerId)) {
           return
         }
-        let entity = pickedObject.id
+        let entity = pickedObject
         if (entity.layerId != this.layerId || entity.flag != 'anchor') {
           return
         }
@@ -157,32 +163,29 @@ export default class GlobePointMeasure {
         return
       }
       this.position = cartesian
-      pickedAnchor.position.setValue(cartesian)
       let text = this._getMeasureTip(this.position)
-      this.entity.label.text = text
+      this.setPrimitiveHeight(cartesian, text)
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
   }
   _createPoint() {
+    
+    let point = this.viewer.scene.primitives.add(new Cesium.LabelCollection())
     let text = this._getMeasureTip(this.position)
-    let point = this.viewer.entities.add({
+    let entity = {
       position: this.position,
-      label: {
-        text: text,
+      text: text,
         font: '18px "微软雅黑", Arial, Helvetica, sans-serif, Helvetica',
         fillColor: Cesium.Color.RED,
         outlineColor: Cesium.Color.SKYBLUE,
         outlineWidth: 1,
         style: Cesium.LabelStyle.FILL_AND_OUTLINE,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
-      },
-      billboard: {
-        image: this.image,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
-      }
-    })
+    }
     point.oid = 0
     point.layerId = this.layerId
     point.flag = 'anchor'
+    
+    point.add(entity)
     this.entity = point
     return point
   }
@@ -225,14 +228,10 @@ export default class GlobePointMeasure {
     })
   }
   _clearMarkers(layerName) {
-    let entityList = this.viewer.entities.values
-    if (entityList === null || entityList.length < 1) return
-    for (let i = 0; i < entityList.length; i++) {
-      let entity = entityList[i]
-      if (entity.layerId === layerName) {
-        this.viewer.entities.remove(entity)
-        i--
+    this.viewer.scene.primitives._primitives.map(e => {
+      if (e.layerId === layerName) {
+        this.viewer.scene.primitives.remove(e)
       }
-    }
+    })
   }
 }

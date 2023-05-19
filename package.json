@@ -1,9 +1,9 @@
 {
-    "name": "draw-cesium",
-    "version": "1.0.3",
-    "title": "draw-cesium",
+    "name": "draw-cesium-primitive",
+    "version": "1.0.0",
+    "title": "draw-cesium-primitive",
     "description": "Cesium draw工具栏",
-    "homepage": "https://github.com/zgeaw/draw-cesium",
+    "homepage": "https://github.com/zgeaw/draw-cesium-primitive",
     "keywords": [
         "Cesium",
         "draw"
@@ -19,7 +19,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/zgeaw/draw-cesium"
+        "url": "https://github.com/zgeaw/draw-cesium-primitive"
     },
     "author": "zgeaw (32237384@qq.com)",
     "license": "MIT",

@@ -64,7 +64,7 @@ export default class GlobePointDrawer {
         return
       }
       this.position = cartesian
-      this.entity.position.setValue(cartesian)
+      this.setPrimitiveHeight(cartesian)
       this.tooltip.setVisible(false)
       this._startModify()
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
@@ -89,9 +89,18 @@ export default class GlobePointDrawer {
       if (this.entity === null) {
         this._createPoint()
       } else {
-        this.entity.position.setValue(cartesian)
+        this.setPrimitiveHeight(cartesian)
+        this.tooltip.showAt(wp, '<p>移动位置</p>')
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+  }
+  
+  // 动态改变位置
+  setPrimitiveHeight(cartesian, pickedAnchor) {
+    if(pickedAnchor){
+      return pickedAnchor._billboards[0].position = cartesian
+    }
+    this.entity._billboards[0].position = cartesian
   }
 
   _startModify() {
@@ -118,9 +127,11 @@ export default class GlobePointDrawer {
       if (!Cesium.defined(cartesian)) {
         return
       }
+      
       if (isMoving) {
         isMoving = false
-        pickedAnchor.position.setValue(cartesian)
+        // pickedAnchor.position.setValue(cartesian)
+        this.setPrimitiveHeight(cartesian, pickedAnchor)
         this.position = cartesian
         this.tooltip.setVisible(false)
       } else {
@@ -128,10 +139,10 @@ export default class GlobePointDrawer {
         if (!Cesium.defined(pickedObject)) {
           return
         }
-        if (!Cesium.defined(pickedObject.id)) {
+        if (!Cesium.defined(pickedObject.collection)) {
           return
         }
-        let entity = pickedObject.id
+        let entity = pickedObject.collection
         if (entity.layerId !== this.layerId || entity.flag !== 'anchor') {
           return
         }
@@ -159,22 +170,23 @@ export default class GlobePointDrawer {
       if (!Cesium.defined(cartesian)) {
         return
       }
-      pickedAnchor.position.setValue(cartesian)
+      this.setPrimitiveHeight(cartesian)
       this.position = cartesian
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
   }
 
-  _createPoint() {
-    let point = this.viewer.entities.add({
+  _createPoint() {    
+    let point = this.viewer.scene.primitives.add(new Cesium.BillboardCollection())
+    let entity = {
+      shapeType: 'Point',
       position: this.position,
-      billboard: {
-        image: this.image,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
-      }
-    })
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      image: this.image
+    }      
     point.oid = 0
     point.layerId = this.layerId
-    point.flag = 'anchor'
+    point.flag = 'anchor'    
+    point.add(entity)
     this.entity = point
     return point
   }
@@ -212,14 +224,10 @@ export default class GlobePointDrawer {
   }
 
   _clearMarkers(layerName) {
-    let entityList = this.viewer.entities.values
-    if (entityList === null || entityList.length < 1) return
-    for (let i = 0; i < entityList.length; i++) {
-      let entity = entityList[i]
-      if (entity.layerId === layerName) {
-        this.viewer.entities.remove(entity)
-        i--
+    this.viewer.scene.primitives._primitives.map(e => {
+      if (e.layerId === layerName) {
+        this.viewer.scene.primitives.remove(e)
       }
-    }
+    })
   }
 }

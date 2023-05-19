@@ -3,9 +3,9 @@
 Using npm:
 
 ```
-npm install draw-cesium --save
+npm install draw-cesium-primitive --save
 
-import drawCesium from 'draw-cesium';
+import drawCesium from 'draw-cesium-primitive';
 
 ```
 
@@ -96,15 +96,18 @@ methods: {
       })
     },
     showPoint(objId, position) {
-      let entity = this.viewer.entities.add({
+      let billboards = this.viewer.scene.primitives.add(new Cesium.BillboardCollection())
+      let entity = {
         layerId: this.layerId,
         objId: objId,
         shapeType: 'Point',
         position: position,
-        billboard: {
-          image: 'images/circle_red.png'
-        }
-      })
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        image: 'images/circle_red.png'
+      }
+      billboards.objId = objId
+      billboards.layerId = this.layerId
+      billboards.add(entity)
     },
     // 编辑点
     editPoint(objId) {
@@ -126,17 +129,11 @@ methods: {
     },
     // 清除单体Id
     clearEntityById(objId) {
-      let entityList = this.viewer.entities.values
-      if (entityList === null || entityList.length < 1) {
-        return
-      }
-      for (let i = 0; i < entityList.length; i++) {
-        let entity = entityList[i]
-        if (entity.layerId === this.layerId && entity.objId === objId) {
-          this.viewer.entities.remove(entity)
-          i--
+      this.viewer.scene.primitives._primitives.map(e => {
+        if (e.layerId === this.layerId && e.objId === objId) {
+          this.viewer.scene.primitives.remove(e)
         }
-      }
+      })
     },
     // 绘制线
     drawPolyline() {
@@ -148,22 +145,32 @@ methods: {
       })
     },
     showPolyline(objId, positions) {
-      var material = new Cesium.PolylineGlowMaterialProperty({
-        glowPower: 0.25,
-        color: Cesium.Color.fromCssColorString('#00f').withAlpha(0.9)
+      let polylinePrimitive = this.viewer.scene.primitives.add(new Cesium.PolylineCollection())
+      polylinePrimitive.add({
+        id: objId,
+        positions,
+        width: 4,
+        loop: true,
+        material: new Cesium.Material.fromType('Color', {
+          color: Cesium.Color.fromCssColorString('#f00')
+        })
       })
-      var bData = {
-        layerId: this.layerId,
-        objId: objId,
-        shapeType: 'Polyline',
-        polyline: {
-          positions: positions,
-          clampToGround: true,
-          width: 8,
-          material: material
-        }
-      }
-      var entity = this.viewer.entities.add(bData)
+      polylinePrimitive.objId = objId
+      polylinePrimitive.layerId = this.layerId
+      polylinePrimitive = this.setPrimitiveHeight({ primitive: polylinePrimitive, height: 8 })
+    },
+    // 设置高度
+    setPrimitiveHeight({
+      primitive,
+      height,
+      positions = { longitude: 121.39444245258065, latitude: 31.170587645068945 }
+    }) {
+      let newHeight = height
+      let surface = Cesium.Cartesian3.fromRadians(positions.longitude, positions.latitude, 0.0)
+      let offset = Cesium.Cartesian3.fromRadians(positions.longitude, positions.latitude, newHeight)
+      let translation = Cesium.Cartesian3.subtract(offset, surface, new Cesium.Cartesian3())
+      primitive.modelMatrix = Cesium.Matrix4.fromTranslation(translation)
+      return primitive
     },
     // 编辑线
     editPolyline(objId) {

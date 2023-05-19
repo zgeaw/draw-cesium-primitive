@@ -103,7 +103,8 @@ export default class GlobePolygonDrawer {
       if (!Cesium.defined(cartesian)) {
         return
       }
-      floatingPoint.position.setValue(cartesian)
+      // floatingPoint.position.setValue(cartesian)
+      this.setPrimitiveHeight(cartesian, floatingPoint)
       this.positions.pop()
       this.positions.push(cartesian)
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
@@ -113,13 +114,22 @@ export default class GlobePolygonDrawer {
         return
       }
       this.positions.pop()
-      this.viewer.entities.remove(floatingPoint)
+      this.viewer.scene.primitives.remove(floatingPoint)
+      // this.viewer.entities.remove(floatingPoint)
       this.tooltip.setVisible(false)
 
       //进入编辑状态
       this.clear()
       this._showModifyRegion2Map()
     }, Cesium.ScreenSpaceEventType.RIGHT_CLICK)
+  }
+  // 动态改变位置
+  setPrimitiveHeight(cartesian, pickedAnchor) {
+    console.log('动态改变位置', pickedAnchor)
+    if(pickedAnchor){
+      return pickedAnchor._billboards[0].position = cartesian
+    }
+    this.entity._billboards[0].position = cartesian
   }
   _startModify() {
     var isMoving = false
@@ -147,7 +157,8 @@ export default class GlobePolygonDrawer {
       }
       if (isMoving) {
         isMoving = false
-        pickedAnchor.position.setValue(cartesian)
+        // pickedAnchor.position.setValue(cartesian)
+        this.setPrimitiveHeight(cartesian, pickedAnchor)
         var oid = pickedAnchor.oid
         this.tempPositions[oid] = cartesian
         this.tooltip.setVisible(false)
@@ -156,13 +167,14 @@ export default class GlobePolygonDrawer {
         }
       } else {
         var pickedObject = this.scene.pick(position)
+        console.log(555, pickedObject)
         if (!Cesium.defined(pickedObject)) {
           return
         }
-        if (!Cesium.defined(pickedObject.id)) {
+        if (!Cesium.defined(pickedObject.collection)) {
           return
         }
-        var entity = pickedObject.id
+        var entity = pickedObject.collection
         if (entity.layerId !== this.layerId) {
           return
         }
@@ -200,12 +212,14 @@ export default class GlobePolygonDrawer {
       }
       var oid = pickedAnchor.oid
       if (pickedAnchor.flag === 'anchor') {
-        pickedAnchor.position.setValue(cartesian)
+        // pickedAnchor.position.setValue(cartesian)        
+        this.setPrimitiveHeight(cartesian, pickedAnchor)
         this.tempPositions[oid] = cartesian
         //左右两个中点
         this._updateNewMidAnchors(oid)
       } else if (pickedAnchor.flag === 'mid_anchor') {
-        pickedAnchor.position.setValue(cartesian)
+        // pickedAnchor.position.setValue(cartesian) 
+        this.setPrimitiveHeight(cartesian, pickedAnchor)
         this.tempPositions[oid] = cartesian
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
@@ -406,31 +420,33 @@ export default class GlobePolygonDrawer {
     this.markers[oid2].position.setValue(c2)
     this.markers[oid3].position.setValue(c3)
   }
-  _createPoint(cartesian, oid) {
-    var point = this.viewer.entities.add({
-      position: cartesian,
-      billboard: {
-        image: this.dragIconLight,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
-      }
-    })
+  _createPoint(position, oid) { 
+    let point = this.viewer.scene.primitives.add(new Cesium.BillboardCollection())
+    let entity = {
+      shapeType: 'Point',
+      position,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      image: this.image
+    }    
     point.oid = oid
     point.layerId = this.layerId
-    point.flag = 'anchor'
+    point.flag = 'anchor'   
+    point.add(entity)
     this.markers[oid] = point
     return point
   }
-  _createMidPoint(cartesian, oid) {
-    var point = this.viewer.entities.add({
-      position: cartesian,
-      billboard: {
-        image: this.dragIcon,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
-      }
-    })
+  _createMidPoint(position, oid) {
+    let point = this.viewer.scene.primitives.add(new Cesium.BillboardCollection())
+    let entity = {
+      shapeType: 'Point',
+      position,
+      disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      image: this.dragIcon
+    }    
     point.oid = oid
     point.layerId = this.layerId
-    point.flag = 'mid_anchor'
+    point.flag = 'mid_anchor'  
+    point.add(entity)
     this.markers[oid] = point
     return point
   }
@@ -488,20 +504,16 @@ export default class GlobePolygonDrawer {
     return false
   }
   _clearMarkers(layerName) {
-    var entityList = this.viewer.entities.values
-    if (entityList === null || entityList.length < 1) return
-    for (var i = 0; i < entityList.length; i++) {
-      var entity = entityList[i]
-      if (entity.layerId === layerName) {
-        this.viewer.entities.remove(entity)
-        i--
+    this.viewer.scene.primitives._primitives.map(e => {
+      if (e.layerId === layerName) {
+        this.viewer.scene.primitives.remove(e)
       }
-    }
+    })
   }
   _clearAnchors() {
     for (var key in this.markers) {
       var m = this.markers[key]
-      this.viewer.entities.remove(m)
+      this.viewer.scene.primitives.remove(m)
     }
     this.markers = {}
   }

@@ -696,7 +696,7 @@ GlobeTooltip.prototype = {
       this.setVisible(true)
       this._title.innerHTML = message
       this._div.style.left = position.x + 10 + 'px'
-      this._div.style.top = position.y - this._div.clientHeight / 2 + 'px'
+      this._div.style.top = position.y + 20 - this._div.clientHeight / 2 + 'px'
     }
   }
 }
