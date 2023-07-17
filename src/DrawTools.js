@@ -14,6 +14,7 @@ import GlobePointMeasure from './lib/GlobePointMeasure'
 import GlobePolylineSpaceMeasure from './lib/GlobePolylineSpaceMeasure'
 import GlobePolylineStickMeasure from './lib/GlobePolylineStickMeasure'
 import GlobePolygonMeasure from './lib/GlobePolygonMeasure'
+import GlobePolylineAngleMeasur from './lib/GlobePolylineAngleMeasur'
 export default class DrawTools {
   constructor(viewer) {
     this.viewer = viewer
@@ -32,6 +33,7 @@ export default class DrawTools {
     this.spaceDisMeasure = null
     this.stickDisMeasure = null
     this.areaMeasure = null
+    this.angleMeasure = null
     this.actionTitle = '操作完成？'
   }
   // 初始化
@@ -71,6 +73,9 @@ export default class DrawTools {
 
     this.areaMeasure = new GlobePolygonMeasure(this.viewer, this.actionTitle)
     this.ctrArr.push(this.areaMeasure)
+
+    this.angleMeasure = new GlobePolylineAngleMeasur(this.viewer, this.actionTitle)
+    this.ctrArr.push(this.angleMeasure)
   }
 
   clear() {
@@ -124,6 +129,16 @@ export default class DrawTools {
       this.ctrArr.push(this.areaMeasure)
     }
     this.areaMeasure.startDrawPolygon(okHandler, cancelHandler)
+  }
+
+  // 角度计算
+  pickAngle(okHandler, cancelHandler) {
+    this.clear()
+    if (this.angleMeasure === null) {
+      this.angleMeasure = new GlobePolylineAngleMeasur(this.viewer, this.actionTitle)
+      this.ctrArr.push(this.angleMeasure)
+    }
+    this.angleMeasure.startDrawPolyline(okHandler, cancelHandler)
   }
 
   trackPoint(okHandler, cancelHandler) {
