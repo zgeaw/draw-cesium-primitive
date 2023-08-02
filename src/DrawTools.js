@@ -16,7 +16,7 @@ import GlobePolylineStickMeasure from './lib/GlobePolylineStickMeasure'
 import GlobePolygonMeasure from './lib/GlobePolygonMeasure'
 import GlobePolylineAngleMeasur from './lib/GlobePolylineAngleMeasur'
 export default class DrawTools {
-  constructor(viewer) {
+  constructor({viewer, lineColor = '#D01C8B', polygonColor = '#D01C8B'}) {
     this.viewer = viewer
     this.ctrArr = []
     this.pointDrawer = null
@@ -35,16 +35,18 @@ export default class DrawTools {
     this.areaMeasure = null
     this.angleMeasure = null
     this.actionTitle = '操作完成？'
+    this.lineColor = lineColor
+    this.polygonColor = polygonColor
   }
   // 初始化
   init() {
     this.pointDrawer = new GlobePointDrawer(this.viewer, this.actionTitle)
     this.ctrArr.push(this.pointDrawer)
 
-    this.polylineDrawer = new GlobePolylineDrawer(this.viewer, this.actionTitle)
+    this.polylineDrawer = new GlobePolylineDrawer(this.viewer, this.actionTitle, this.lineColor)
     this.ctrArr.push(this.polylineDrawer)
 
-    this.polygonDrawer = new GlobePolygonDrawer(this.viewer, this.actionTitle)
+    this.polygonDrawer = new GlobePolygonDrawer(this.viewer, this.actionTitle, this.polygonColor)
     this.ctrArr.push(this.polygonDrawer)
 
     this.circleDrawer = new GlobeCircleDrawer(this.viewer, this.actionTitle)
@@ -153,7 +155,7 @@ export default class DrawTools {
   trackPolyline(okHandler, cancelHandler) {
     this.clear()
     if (this.polylineDrawer === null) {
-      this.polylineDrawer = new GlobePolylineDrawer(this.viewer, this.actionTitle)
+      this.polylineDrawer = new GlobePolylineDrawer(this.viewer, this.actionTitle, this.lineColor)
       this.ctrArr.push(this.polylineDrawer)
     }
     this.polylineDrawer.startDrawPolyline(okHandler, cancelHandler)
@@ -162,7 +164,7 @@ export default class DrawTools {
   trackPolygon(okHandler, cancelHandler) {
     this.clear()
     if (this.polygonDrawer === null) {
-      this.polygonDrawer = new GlobePolygonDrawer(this.viewer, this.actionTitle)
+      this.polygonDrawer = new GlobePolygonDrawer(this.viewer, this.actionTitle, this.polygonColor)
       this.ctrArr.push(this.polygonDrawer)
     }
     this.polygonDrawer.startDrawPolygon(okHandler, cancelHandler)

@@ -1,5 +1,5 @@
 export default class GlobePolygonDrawer {
-  constructor(viewer, actionTitle) {
+  constructor(viewer, actionTitle, polygonColor) {
     this.viewer = viewer
     this.scene = viewer.scene
     this.clock = viewer.clock
@@ -27,6 +27,7 @@ export default class GlobePolygonDrawer {
     this.markers = {}
     this.layerId = 'globeDrawerLayer'
     this.actionTitle = actionTitle
+    this.polygonColor = polygonColor
   }
 
   clear() {
@@ -103,8 +104,7 @@ export default class GlobePolygonDrawer {
       if (!Cesium.defined(cartesian)) {
         return
       }
-      // floatingPoint.position.setValue(cartesian)
-      this.setPrimitiveHeight(cartesian, floatingPoint)
+      floatingPoint.position.setValue(cartesian)
       this.positions.pop()
       this.positions.push(cartesian)
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
@@ -114,22 +114,13 @@ export default class GlobePolygonDrawer {
         return
       }
       this.positions.pop()
-      this.viewer.scene.primitives.remove(floatingPoint)
-      // this.viewer.entities.remove(floatingPoint)
+      this.viewer.entities.remove(floatingPoint)
       this.tooltip.setVisible(false)
 
       //进入编辑状态
       this.clear()
       this._showModifyRegion2Map()
     }, Cesium.ScreenSpaceEventType.RIGHT_CLICK)
-  }
-  // 动态改变位置
-  setPrimitiveHeight(cartesian, pickedAnchor) {
-    console.log('动态改变位置', pickedAnchor)
-    if(pickedAnchor){
-      return pickedAnchor._billboards[0].position = cartesian
-    }
-    this.entity._billboards[0].position = cartesian
   }
   _startModify() {
     var isMoving = false
@@ -157,8 +148,7 @@ export default class GlobePolygonDrawer {
       }
       if (isMoving) {
         isMoving = false
-        // pickedAnchor.position.setValue(cartesian)
-        this.setPrimitiveHeight(cartesian, pickedAnchor)
+        pickedAnchor.position.setValue(cartesian)
         var oid = pickedAnchor.oid
         this.tempPositions[oid] = cartesian
         this.tooltip.setVisible(false)
@@ -167,14 +157,13 @@ export default class GlobePolygonDrawer {
         }
       } else {
         var pickedObject = this.scene.pick(position)
-        console.log(555, pickedObject)
         if (!Cesium.defined(pickedObject)) {
           return
         }
-        if (!Cesium.defined(pickedObject.collection)) {
+        if (!Cesium.defined(pickedObject.id)) {
           return
         }
-        var entity = pickedObject.collection
+        var entity = pickedObject.id
         if (entity.layerId !== this.layerId) {
           return
         }
@@ -212,26 +201,24 @@ export default class GlobePolygonDrawer {
       }
       var oid = pickedAnchor.oid
       if (pickedAnchor.flag === 'anchor') {
-        // pickedAnchor.position.setValue(cartesian)        
-        this.setPrimitiveHeight(cartesian, pickedAnchor)
+        pickedAnchor.position.setValue(cartesian)
         this.tempPositions[oid] = cartesian
         //左右两个中点
         this._updateNewMidAnchors(oid)
       } else if (pickedAnchor.flag === 'mid_anchor') {
-        // pickedAnchor.position.setValue(cartesian) 
-        this.setPrimitiveHeight(cartesian, pickedAnchor)
+        pickedAnchor.position.setValue(cartesian)
         this.tempPositions[oid] = cartesian
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
   }
   _showRegion2Map() {
     if (this.material === null) {
-      this.material = Cesium.Color.fromCssColorString('#ff0').withAlpha(0.5)
+      this.material = Cesium.Color.fromCssColorString(this.polygonColor).withAlpha(0.5)
     }
     if (this.outlineMaterial === null) {
       this.outlineMaterial = new Cesium.PolylineDashMaterialProperty({
         dashLength: 16,
-        color: Cesium.Color.fromCssColorString('#00f').withAlpha(0.7)
+        color: Cesium.Color.fromCssColorString(this.polygonColor).withAlpha(0.7)
       })
     }
     var dynamicHierarchy = new Cesium.CallbackProperty(() => {
@@ -259,14 +246,14 @@ export default class GlobePolygonDrawer {
         show: this.fill,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
       }),
-      polyline: {
-        positions: outlineDynamicPositions,
-        clampToGround: true,
-        width: this.outlineWidth,
-        material: this.outlineMaterial,
-        show: this.outline,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
-      }
+      // polyline: {
+      //   positions: outlineDynamicPositions,
+      //   clampToGround: true,
+      //   width: this.outlineWidth,
+      //   material: this.outlineMaterial,
+      //   show: this.outline,
+      //   disableDepthTestDistance: Number.POSITIVE_INFINITY
+      // }
     }
     if (this.extrudedHeight > 0) {
       bData.polygon.extrudedHeight = this.extrudedHeight
@@ -300,12 +287,12 @@ export default class GlobePolygonDrawer {
       }
     }, false)
     if (this.material === null) {
-      this.material = Cesium.Color.fromCssColorString('#ff0').withAlpha(0.5)
+      this.material = Cesium.Color.fromCssColorString(this.polygonColor).withAlpha(0.5)
     }
     if (this.outlineMaterial === null) {
       this.outlineMaterial = new Cesium.PolylineDashMaterialProperty({
         dashLength: 16,
-        color: Cesium.Color.fromCssColorString('#00f').withAlpha(0.7)
+        color: Cesium.Color.fromCssColorString(this.polygonColor).withAlpha(0.7)
       })
     }
     var bData = {
@@ -315,14 +302,14 @@ export default class GlobePolygonDrawer {
         show: this.fill,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
       }),
-      polyline: {
-        positions: outlineDynamicPositions,
-        clampToGround: true,
-        width: this.outlineWidth,
-        material: this.outlineMaterial,
-        show: this.outline,
-        disableDepthTestDistance: Number.POSITIVE_INFINITY
-      }
+      // polyline: {
+      //   positions: outlineDynamicPositions,
+      //   clampToGround: true,
+      //   width: this.outlineWidth,
+      //   material: this.outlineMaterial,
+      //   show: this.outline,
+      //   disableDepthTestDistance: Number.POSITIVE_INFINITY
+      // }
     }
     if (this.extrudedHeight > 0) {
       bData.polygon.extrudedHeight = this.extrudedHeight
@@ -420,33 +407,31 @@ export default class GlobePolygonDrawer {
     this.markers[oid2].position.setValue(c2)
     this.markers[oid3].position.setValue(c3)
   }
-  _createPoint(position, oid) { 
-    let point = this.viewer.scene.primitives.add(new Cesium.BillboardCollection())
-    let entity = {
-      shapeType: 'Point',
-      position,
-      disableDepthTestDistance: Number.POSITIVE_INFINITY,
-      image: this.image
-    }    
+  _createPoint(cartesian, oid) {
+    var point = this.viewer.entities.add({
+      position: cartesian,
+      billboard: {
+        image: this.dragIconLight,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
+      }
+    })
     point.oid = oid
     point.layerId = this.layerId
-    point.flag = 'anchor'   
-    point.add(entity)
+    point.flag = 'anchor'
     this.markers[oid] = point
     return point
   }
-  _createMidPoint(position, oid) {
-    let point = this.viewer.scene.primitives.add(new Cesium.BillboardCollection())
-    let entity = {
-      shapeType: 'Point',
-      position,
-      disableDepthTestDistance: Number.POSITIVE_INFINITY,
-      image: this.dragIcon
-    }    
+  _createMidPoint(cartesian, oid) {
+    var point = this.viewer.entities.add({
+      position: cartesian,
+      billboard: {
+        image: this.dragIcon,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
+      }
+    })
     point.oid = oid
     point.layerId = this.layerId
-    point.flag = 'mid_anchor'  
-    point.add(entity)
+    point.flag = 'mid_anchor'
     this.markers[oid] = point
     return point
   }
@@ -485,8 +470,9 @@ export default class GlobePolygonDrawer {
             var p = this.tempPositions[i]
             positions.push(p)
           }
+          let lonLats = this._getLonLats(positions)
           this.positions = positions
-          this.okHandler(positions)
+          this.okHandler(positions, lonLats)
         }
       },
       cancelClick: () =>{
@@ -497,6 +483,30 @@ export default class GlobePolygonDrawer {
       }
     })
   }
+  _getLonLat(cartesian) {
+    let cartographic = this.ellipsoid.cartesianToCartographic(cartesian)
+    cartographic.height = this.viewer.scene.globe.getHeight(cartographic)
+    let pos = {
+      lon: cartographic.longitude,
+      lat: cartographic.latitude,
+      alt: cartographic.height,
+      height: cartographic.height
+    }
+    pos.lon = Cesium.Math.toDegrees(pos.lon)
+    pos.lat = Cesium.Math.toDegrees(pos.lat)
+    return pos
+  }
+  _getLonLats(positions) {
+    let arr = []
+    for (let i = 0; i < positions.length; i++) {
+      let c = positions[i]
+      let p = this._getLonLat(c)
+      p.sid = c.sid
+      p.oid = c.oid
+      arr.push(p)
+    }
+    return arr
+  }
   _isSimpleXYZ(p1, p2) {
     if (p1.x === p2.x && p1.y === p2.y && p1.z === p2.z) {
       return true
@@ -504,16 +514,20 @@ export default class GlobePolygonDrawer {
     return false
   }
   _clearMarkers(layerName) {
-    this.viewer.scene.primitives._primitives.map(e => {
-      if (e.layerId === layerName) {
-        this.viewer.scene.primitives.remove(e)
+    var entityList = this.viewer.entities.values
+    if (entityList === null || entityList.length < 1) return
+    for (var i = 0; i < entityList.length; i++) {
+      var entity = entityList[i]
+      if (entity.layerId === layerName) {
+        this.viewer.entities.remove(entity)
+        i--
       }
-    })
+    }
   }
   _clearAnchors() {
     for (var key in this.markers) {
       var m = this.markers[key]
-      this.viewer.scene.primitives.remove(m)
+      this.viewer.entities.remove(m)
     }
     this.markers = {}
   }

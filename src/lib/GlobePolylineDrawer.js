@@ -1,5 +1,5 @@
 export default class GlobePolylineDrawer {
-  constructor(viewer, actionTitle) {
+  constructor(viewer, actionTitle, lineColor) {
     this.viewer = viewer
     this.scene = viewer.scene
     this.clock = viewer.clock
@@ -22,6 +22,7 @@ export default class GlobePolylineDrawer {
     this.markers = {}
     this.layerId = 'globeDrawerLayer'
     this.actionTitle = actionTitle
+    this.lineColor = lineColor
   }
 
   clear() {
@@ -208,10 +209,7 @@ export default class GlobePolylineDrawer {
   }
   _showPolyline2Map() {
     if (this.material === null) {
-      this.material = new Cesium.PolylineGlowMaterialProperty({
-        glowPower: 0.25,
-        color: Cesium.Color.fromCssColorString('#00f').withAlpha(0.9)
-      })
+      this.material = Cesium.Color.fromCssColorString(this.lineColor).withAlpha(0.5)
     }
     let dynamicPositions = new Cesium.CallbackProperty(() => {
       return this.positions
@@ -220,7 +218,7 @@ export default class GlobePolylineDrawer {
       polyline: {
         positions: dynamicPositions,
         clampToGround: true,
-        width: 8,
+        width: 4,
         material: this.material,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
@@ -236,16 +234,13 @@ export default class GlobePolylineDrawer {
       return this.tempPositions
     }, false)
     if (this.material === null) {
-      this.material = new Cesium.PolylineGlowMaterialProperty({
-        glowPower: 0.25,
-        color: Cesium.Color.fromCssColorString('#00f').withAlpha(0.9)
-      })
+      this.material = Cesium.Color.fromCssColorString(this.lineColor).withAlpha(0.5)
     }
     let bData = {
       polyline: {
         positions: dynamicPositions,
         clampToGround: true,
-        width: 8,
+        width: 4,
         material: this.material,
         disableDepthTestDistance: Number.POSITIVE_INFINITY
       }
